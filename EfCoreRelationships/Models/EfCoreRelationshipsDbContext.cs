@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.VisualBasic.CompilerServices;
 
 namespace EfCoreRelationships.Models
 {
@@ -11,6 +12,8 @@ namespace EfCoreRelationships.Models
         }
 
         public virtual DbSet<User> Users { get; set; } = default!;
+        public virtual DbSet<Blog> Blogs { get; set; } = default!;
+        public virtual DbSet<Post> Posts { get; set; } = default!;
         
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -20,6 +23,7 @@ namespace EfCoreRelationships.Models
             
             modelBuilder.HasSequence("global_id_seq");
 
+            // one to one
             modelBuilder.Entity<User>(entity =>
             {
                 entity.ToTable("users");
@@ -44,6 +48,28 @@ namespace EfCoreRelationships.Models
                 entity.Property(e => e.Created).HasColumnName("created")
                     .HasColumnType("timestamp(6) with time zone")
                     .HasDefaultValueSql("CURRENT_TIMESTAMP");
+                
+                entity.HasOne(p => p.Profile)
+                    .WithOne(u => u.User)
+                    .HasForeignKey<Profile>(p => p.UserId);
+            });
+
+            modelBuilder.Entity<Profile>(entity =>
+            {
+                entity.HasKey(e => e.UserId);
+            });
+
+            // one to many
+            modelBuilder.Entity<Box>(entity =>
+            {
+            });
+
+            modelBuilder.Entity<BoxItem>(entity =>
+            {
+                entity.HasOne(bt => bt.Box)
+                    .WithMany(b => b.Items)
+                    .HasForeignKey(bt=> bt.BoxId)
+                    .OnDelete(DeleteBehavior.SetNull);
             });
             
             OnModelCreatingPartial(modelBuilder); 
